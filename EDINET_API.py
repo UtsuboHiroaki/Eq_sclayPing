@@ -105,7 +105,7 @@ def create_csv(title, cash_flow_list_kakou):
 edinet_url = "https://disclosure.edinet-fsa.go.jp/api/v1/documents.json"
 #codes = [3738, 4659]
 codes = []
-year = 5
+year = 1
 month = 0
 day = 0
 annual = True
