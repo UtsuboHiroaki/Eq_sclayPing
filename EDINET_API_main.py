@@ -121,7 +121,7 @@ def create_csv(title, cash_flow_list):
         writer.writerows(cash_flow_list)
 
 edinet_url = "https://disclosure.edinet-fsa.go.jp/api/v1/documents.json"
-#codes = [3738, 4659]
+#すぐ結果が出るように日付を調整(2022/12/25)
 codes = []
 year = 0
 month = 19
@@ -131,7 +131,6 @@ quarter = False
 
 cash_flow_list = []
 find_word1 = '連結キャッシュ・フロー計算書'
-#find_words = ['営業活動によるキャッシュ・フロー', '減価償却費', '有形固定資産', '無形固定資産']
 find_words = ['営業活動によるキャッシュ・フロー', '減価償却費', '固定資産']
 find_words2 = ['支出', '収入']
 
@@ -139,8 +138,6 @@ find_words2 = ['支出', '収入']
 
 base_path = Path(__file__).parent
 path_dif = base_path / 'screening' / 'csv_differ.csv'
-#初回なので全銘柄(2022/10/10)
-#path_dif = base_path / 'screening' / 'csv_reserch.csv'
 with path_dif.open(mode='r', encoding='utf-8') as file:
     reader = csv.DictReader(file)
     for row in reader:
@@ -164,11 +161,6 @@ def date_range(start, stop, step=timedelta(1)):
 
 # 結果を格納するDataFrameを用意
 database = pd.DataFrame(index=[], columns=['code', 'type', 'date', 'title', 'URL'])
-#three_month_ago = date.today() - relativedelta(months=3)
-"""
-for d in date_range(three_month_ago - relativedelta(years=year, months=month, days=day) + relativedelta(days=1),
-                    three_month_ago + relativedelta(days=1)):
-"""
 for d in date_range(date.today() - relativedelta(years=year, months=month, days=day) + relativedelta(days=1),
                     date.today() + relativedelta(months=-17)):
     # EDINET API にアクセス
