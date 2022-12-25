@@ -15,9 +15,7 @@ import requests
 from bs4 import BeautifulSoup
 from dateutil.relativedelta import relativedelta
 
-"""
-このファイルは2巡目以降の作業に使用。一度目はダウンロ－ドまでで終わってよい
-"""
+
 # ダウンロ－ドされたHTMLを順に調べる関数。find_word1は調べる財務諸表。word3はその項目
 def rearch_data (files, find_word1, sec_code, dow_data, *find_words):
     # 作業回数を1回にしたいのでカウンタ－設定。counterが1以上ならル－プ抜ける
@@ -121,7 +119,7 @@ def create_csv(title, cash_flow_list):
         writer.writerows(cash_flow_list)
 
 edinet_url = "https://disclosure.edinet-fsa.go.jp/api/v1/documents.json"
-#すぐ結果が出るように日付を調整(2022/12/25)
+"すぐ結果が出るように日付を調整(2022/12/25)"
 codes = []
 year = 0
 month = 19
@@ -130,8 +128,11 @@ annual = True
 quarter = False
 
 cash_flow_list = []
+"決算書で参照したい財務諸表名"
 find_word1 = '連結キャッシュ・フロー計算書'
+"財務諸表で抽出したい項目を記載"
 find_words = ['営業活動によるキャッシュ・フロー', '減価償却費', '固定資産']
+"追加ワ－ドがある時は設定"
 find_words2 = ['支出', '収入']
 
 #差分リストから銘柄コ－ドを取り出す(新しくしたcsv_differ.csvで実施)
@@ -210,7 +211,7 @@ for d in date_range(date.today() - relativedelta(years=year, months=month, days=
                         database = pd.concat([database, df2[['code', 'type', 'date', 'title', 'URL']]], axis=0,
                                              join='outer').reset_index(drop=True)
 pprint.pprint(database)
-#csvでリンク先デ－タ排出
+"csvでリンク先デ－タ排出"
 path_edi_Url = base_path / 'CASAFLOWDATA' / 'csv_edinet_url.csv'
 database.to_csv(path_edi_Url, encoding='utf-8', index=True)
 #    return database
