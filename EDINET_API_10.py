@@ -16,8 +16,8 @@ ZIPファイルのダウンロード専用
 """
 edinet_url = "https://disclosure.edinet-fsa.go.jp/api/v1/documents.json"
 codes = []
-year = 0
-month = 19
+year = 1
+month = 0
 day = 0
 annual = True
 quarter = False
@@ -25,6 +25,8 @@ quarter = False
 #差分リストから銘柄コ－ドを取り出す
 
 base_path = Path(__file__).parent
+#path_dif = base_path / 'screening' / 'csv_differ.csv'
+#初回なので全銘柄(2022/10/10)
 path_dif = base_path / 'screening' / 'csv_differ.csv'
 with path_dif.open(mode='r', encoding='utf-8') as file:
     reader = csv.DictReader(file)
@@ -49,9 +51,13 @@ def date_range(start, stop, step=timedelta(1)):
 
 # 結果を格納するDataFrameを用意
 database = pd.DataFrame(index=[], columns=['code', 'type', 'date', 'title', 'URL'])
-
+#three_month_ago = date.today() - relativedelta(months=3)
+"""
+for d in date_range(three_month_ago - relativedelta(years=year, months=month, days=day) + relativedelta(days=1),
+                    three_month_ago + relativedelta(days=1)):
+"""
 for d in date_range(date.today() - relativedelta(years=year, months=month, days=day) + relativedelta(days=1),
-                    date.today() + relativedelta(months=-17)):
+                    date.today() + relativedelta(days=1)):
     # EDINET API にアクセス
     d_str = d.strftime('%Y-%m-%d')
     params = {'date': d_str, 'type': 2}
