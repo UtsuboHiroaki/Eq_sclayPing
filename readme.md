@@ -68,4 +68,4 @@
 
 9. 完了すれば　\CASAFLOWDATA　フォルダにCSVファイルが作成される
 
-   - CASAFLOWDATA_2022-12-25.csvが結果のサンプルファイルです
+
