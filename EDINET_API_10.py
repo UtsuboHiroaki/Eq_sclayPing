@@ -51,11 +51,7 @@ def date_range(start, stop, step=timedelta(1)):
 
 # 結果を格納するDataFrameを用意
 database = pd.DataFrame(index=[], columns=['code', 'type', 'date', 'title', 'URL'])
-#three_month_ago = date.today() - relativedelta(months=3)
-"""
-for d in date_range(three_month_ago - relativedelta(years=year, months=month, days=day) + relativedelta(days=1),
-                    three_month_ago + relativedelta(days=1)):
-"""
+
 for d in date_range(date.today() - relativedelta(years=year, months=month, days=day) + relativedelta(days=1),
                     date.today() + relativedelta(days=1)):
     # EDINET API にアクセス
@@ -89,13 +85,12 @@ for d in date_range(date.today() - relativedelta(years=year, months=month, days=
         if len(str(int(code))) == 4:
             code = str(int(code)) + '0'
         # 指定された証券コードのみを抽出
-        if code != None:
+        if code is not None:
             df0 = df[df['code'] == code]
             if not df0.empty:
-                if annual == True:
+                if annual:
                     df1 = df0[(df0['ordinanceCode'] == '010') & (df0['formCode'] == '030000')]
                     df1['type'] = 'annual'
-                    #if database.empty:
                     database = pd.concat([database, df1[['code', 'type', 'date', 'title', 'URL']]], axis=0,
                                              join='outer').reset_index(drop=True)
                 if quarter == True:
@@ -117,7 +112,7 @@ for key in keys:
         codes2.append(str(key_code))
 
 codes = codes2
-if codes == None:
+if codes is None:
     codes = [None]
 else:
     if type(codes) in (str, int, float):
