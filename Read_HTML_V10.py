@@ -22,7 +22,7 @@ def rearch_data (files, find_word1, sec_code, dow_data, *find_words):
 
         # htmデータの取得
         soup = BeautifulSoup(html, 'html.parser')
-        #ヘッダーの文字の大きさが定まらない為可変にする
+        # ヘッダーの文字の大きさが定まらない為可変にする
         for i in range(6):
             if counter > 0:
                 break

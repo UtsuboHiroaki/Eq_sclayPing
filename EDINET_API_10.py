@@ -11,9 +11,8 @@ import pandas as pd
 import requests
 from dateutil.relativedelta import relativedelta
 
-"""
-ZIPファイルのダウンロード専用
-"""
+# ZIPファイルのダウンロード専用
+
 edinet_url = "https://disclosure.edinet-fsa.go.jp/api/v1/documents.json"
 codes = []
 year = 1
@@ -22,11 +21,11 @@ day = 0
 annual = True
 quarter = False
 
-#差分リストから銘柄コ－ドを取り出す
+# 差分リストから銘柄コ－ドを取り出す
 
 base_path = Path(__file__).parent
-#path_dif = base_path / 'screening' / 'csv_differ.csv'
-#初回なので全銘柄(2022/10/10)
+# path_dif = base_path / 'screening' / 'csv_differ.csv'
+# 初回なので全銘柄(2022/10/10)
 path_dif = base_path / 'screening' / 'csv_differ.csv'
 with path_dif.open(mode='r', encoding='utf-8') as file:
     reader = csv.DictReader(file)
@@ -37,7 +36,7 @@ with path_dif.open(mode='r', encoding='utf-8') as file:
 print(codes)
 
 # codesを文字型の配列に統一する．
-if codes != None:
+if codes is not None:
     if type(codes) in (str, int, float):
         codes = [int(codes)]
 
@@ -93,7 +92,7 @@ for d in date_range(date.today() - relativedelta(years=year, months=month, days=
                     df1['type'] = 'annual'
                     database = pd.concat([database, df1[['code', 'type', 'date', 'title', 'URL']]], axis=0,
                                              join='outer').reset_index(drop=True)
-                if quarter == True:
+                if quarter:
                     df2 = df0[(df0['ordinanceCode'] == '010') & (df0['formCode'] == '043000')]
                     df2['type'] = 'quarter'
                     if database.empty:
@@ -120,7 +119,7 @@ else:
     for i, code in enumerate(codes):
         if len(str(int(code))) == 4:
             codes[i] = str(int(code)) + '0'
-        if code == None:
+        if code is None:
             df_company = database
         else:
             df_company = database[database['code'] == codes[i]]
@@ -128,7 +127,7 @@ else:
 
             # 証券コードをディレクトリ名とする
             dir_path = database.loc[i, 'code']
-            if os.path.exists(dir_path) == False:
+            if os.path.exists(dir_path) is False:
                 os.mkdir(dir_path)
 
             for i in range(df_company.shape[0]):
