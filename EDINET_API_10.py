@@ -11,7 +11,7 @@ import pandas as pd
 import requests
 from dateutil.relativedelta import relativedelta
 
-# ZIPファイルのダウンロード専用
+# ZIPファイルのダウンロード専用(2023/01/05 書き直し用にRetryのブランチを作成)
 
 edinet_url = "https://disclosure.edinet-fsa.go.jp/api/v1/documents.json"
 codes = []
