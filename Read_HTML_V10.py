@@ -19,12 +19,15 @@ def csv_open(csv_file_path):
             key = row['銘柄コード']
             sec_codes.append(key)
 
+
 def sec_code_fifth(sec_code):
     """
     sec_codeが4桁の時に5桁にする関数
     """
     if len(str(int(sec_code))) == 4:
         sec_code = str(int(sec_code)) + '0'
+        return sec_code
+
 
 def del_folder(bath_path):
     """
@@ -147,12 +150,13 @@ print(sec_codes)
 del_folder(bath_path)
 
 for sec_code in sec_codes:
-    sec_code_fifth(sec_code)
+    sec_code = sec_code_fifth(sec_code)
     folder = Path.joinpath(bath_path, sec_code)
     if folder.exists():
         items = folder.glob('*.zip')
         for item in items:
             print(item.name)
+
     with zipfile.ZipFile(item) as existing_zip:
         existing_zip.extractall()
     filepath = str(Path.joinpath(bath_path, 'XBRL', 'PublicDoc'))
@@ -166,8 +170,8 @@ for sec_code in sec_codes:
     find_words = ['営業活動によるキャッシュ・フロー', '減価償却費', '固定資産']
     find_words2 = ['支出', '収入']
     cash_flow_datas = rearch_data(files, find_word1, sec_code, dow_data, *find_words)
-    if fold_path.exists():
-        shutil.rmtree(fold_path)
+    del_folder
+
 pprint.pprint(cash_flow_list)
 title = 'CASAFLOWDATA_'
 create_csv(title, cash_flow_list)
