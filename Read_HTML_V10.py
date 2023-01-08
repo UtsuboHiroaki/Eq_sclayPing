@@ -38,6 +38,30 @@ def del_folder(bath_path):
         shutil.rmtree(fold_path)
 
 
+def sec_code_reserch(sec_codes, bath_path, find_word1, find_words, find_words2):
+    """
+    銘柄コード毎に調査をする
+    """
+    for sec_code in sec_codes:
+        sec_code = sec_code_fifth(sec_code)
+        folder = Path.joinpath(bath_path, sec_code)
+        if folder.exists():
+            items = folder.glob('*.zip')
+            for item in items:
+                print(item.name)
+
+        with zipfile.ZipFile(item) as existing_zip:
+            existing_zip.extractall()
+        filepath = str(Path.joinpath(bath_path, 'XBRL', 'PublicDoc'))
+        files = glob.glob(filepath + '/*.htm')  # htmファイルの取得
+        files = sorted(files)  # ファイルを並び替えているだけ
+
+        dow_data = item.name
+        # キャッシュフロー系のデ-タを取り入れるリストを作成
+        cash_flow_datas = rearch_data(files, find_word1, sec_code, dow_data, *find_words)
+        del_folder
+
+
 # ダウンロ－ドされたHTMLを順に調べる関数。find_word1は調べる財務諸表。word3はその項目
 def rearch_data(files, find_word1, sec_code, dow_data, *find_words):
     # 作業回数を1回にしたいのでカウンタ－設定。counterが1以上ならル－プ抜ける
@@ -140,7 +164,9 @@ def create_csv(title, cash_flow_list):
         writer.writeheader()
         writer.writerows(cash_flow_list)
 
-
+find_word1 = '連結キャッシュ・フロー計算書'
+find_words = ['営業活動によるキャッシュ・フロー', '減価償却費', '固定資産']
+find_words2 = ['支出', '収入']
 bath_path = Path(__file__).resolve().parent
 cash_flow_list = []
 sec_codes = []
@@ -148,29 +174,7 @@ csv_file_path = bath_path / 'screening' / 'csv_differ.csv'
 csv_open(csv_file_path)
 print(sec_codes)
 del_folder(bath_path)
-
-for sec_code in sec_codes:
-    sec_code = sec_code_fifth(sec_code)
-    folder = Path.joinpath(bath_path, sec_code)
-    if folder.exists():
-        items = folder.glob('*.zip')
-        for item in items:
-            print(item.name)
-
-    with zipfile.ZipFile(item) as existing_zip:
-        existing_zip.extractall()
-    filepath = str(Path.joinpath(bath_path, 'XBRL', 'PublicDoc'))
-    files = glob.glob(filepath + '/*.htm')  # htmファイルの取得
-    files = sorted(files)  # ファイルを並び替えているだけ
-
-    dow_data = item.name
-    # キャッシュフロー系のデ-タを取り入れるリストを作成
-
-    find_word1 = '連結キャッシュ・フロー計算書'
-    find_words = ['営業活動によるキャッシュ・フロー', '減価償却費', '固定資産']
-    find_words2 = ['支出', '収入']
-    cash_flow_datas = rearch_data(files, find_word1, sec_code, dow_data, *find_words)
-    del_folder
+sec_code_reserch(sec_codes, bath_path, find_word1, find_words, find_words2)
 
 pprint.pprint(cash_flow_list)
 title = 'CASAFLOWDATA_'
