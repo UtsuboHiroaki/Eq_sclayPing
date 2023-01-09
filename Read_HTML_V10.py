@@ -58,8 +58,42 @@ def sec_code_reserch(sec_codes, bath_path, find_word1, find_words, find_words2):
 
         dow_data = item.name
         # キャッシュフロー系のデ-タを取り入れるリストを作成
-        cash_flow_datas = rearch_data(files, find_word1, sec_code, dow_data, *find_words)
+        rearch_data(files, find_word1, sec_code, dow_data, *find_words)
         del_folder
+
+def rearch_data(files, find_word1, sec_code, dow_data, *find_words):
+    """
+    作業回数を1回にしたいのでカウンタ－設定。counterが1以上ならル－プ抜ける
+    ダウンロ－ドされたHTMLを順に調べる関数。find_word1は調べる財務諸表。word3はその項目
+    """
+    counter = 0
+    for target_file in files:
+        print(target_file)
+        if counter > 0:
+            break
+        with open(target_file, encoding='utf-8') as f:
+            html = f.read()
+
+        # htmデータの取得
+        soup = BeautifulSoup(html, 'html.parser')
+        # ヘッダーの文字の大きさが定まらない為可変にする
+        for i in range(6):
+            if counter > 0:
+                break
+            hs = "h" + str(i)
+            h5s = soup.select(hs)
+            if h5s:
+                for h5 in h5s:
+                    if counter > 0:
+                        break
+                    h5_word = h5.get_text()
+                    # HTMLから連結キャッシュフロー計算書計算書の文字を探し、単位を求める
+                    if h5_word.find(find_word1) > 0:
+                        tani_moto = soup.select('tr p')
+                        data_moto = soup.select('tr')
+                        data_get(tani_moto, data_moto, find_words, find_words2, sec_code, dow_data)
+
+    return cash_flow_list
 
 def data_get(tani_moto,data_moto, find_words, find_words2, sec_code, dow_data):
     """
@@ -119,39 +153,7 @@ def data_get(tani_moto,data_moto, find_words, find_words2, sec_code, dow_data):
                             word_counter += 1
                         if word_counter > 1:
                             break
-
-# ダウンロ－ドされたHTMLを順に調べる関数。find_word1は調べる財務諸表。word3はその項目
-def rearch_data(files, find_word1, sec_code, dow_data, *find_words):
-    # 作業回数を1回にしたいのでカウンタ－設定。counterが1以上ならル－プ抜ける
-    counter = 0
-    for target_file in files:
-        print(target_file)
-        if counter > 0:
-            break
-        with open(target_file, encoding='utf-8') as f:
-            html = f.read()
-
-        # htmデータの取得
-        soup = BeautifulSoup(html, 'html.parser')
-        # ヘッダーの文字の大きさが定まらない為可変にする
-        for i in range(6):
-            if counter > 0:
-                break
-            hs = "h" + str(i)
-            h5s = soup.select(hs)
-            if h5s:
-                for h5 in h5s:
-                    if counter > 0:
-                        break
-                    h5_word = h5.get_text()
-                    # HTMLから連結キャッシュフロー計算書計算書の文字を探し、単位を求める
-                    if h5_word.find(find_word1) > 0:
-                        tani_moto = soup.select('tr p')
-                        data_moto = soup.select('tr')
-                        data_get(tani_moto, data_moto, find_words, find_words2, sec_code, dow_data)
-
-    return cash_flow_list
-
+    return counter
 
 def create_csv(title, cash_flow_list):
     """
