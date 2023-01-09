@@ -181,7 +181,7 @@ csv_open(csv_file_path)
 print(sec_codes)
 del_folder(bath_path)
 sec_code_reserch(sec_codes, bath_path, find_word1, find_words, find_words2)
-
+del_folder(bath_path)
 pprint.pprint(cash_flow_list)
 title = 'CASAFLOWDATA_'
 create_csv(title, cash_flow_list)
