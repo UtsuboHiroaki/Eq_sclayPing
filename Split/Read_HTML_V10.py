@@ -5,16 +5,8 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
+from Split.code_fifth import sec_code_fifth
 from Split.funcs import create_csv, csv_open, del_folder
-
-
-def sec_code_fifth(sec_code):
-    """
-    sec_codeが4桁の時に5桁にする関数
-    """
-    if len(str(int(sec_code))) == 4:
-        sec_code = str(int(sec_code)) + '0'
-        return sec_code
 
 
 def sec_code_reserch(sec_codes, bath_path, find_word1, find_words, find_words2):
