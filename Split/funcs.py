@@ -1,6 +1,9 @@
 import csv
+import shutil
 from datetime import date
 from pathlib import Path
+
+from Split.Read_HTML_V10 import sec_codes
 
 
 def create_csv(title, cash_flow_list):
@@ -19,3 +22,23 @@ def create_csv(title, cash_flow_list):
         writer = csv.DictWriter(f, fieldnames=field_names, extrasaction='ignore')
         writer.writeheader()
         writer.writerows(cash_flow_list)
+
+
+def csv_open(csv_file_path):
+    """
+    csvファイルの読み込み
+    """
+    with csv_file_path.open(mode='r', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            key = row['銘柄コード']
+            sec_codes.append(key)
+
+
+def del_folder(bath_path):
+    """
+    解凍フォルダーが存在したら削除する
+    """
+    fold_path = Path.joinpath(bath_path, 'XBRL')
+    if fold_path.exists():
+        shutil.rmtree(fold_path)

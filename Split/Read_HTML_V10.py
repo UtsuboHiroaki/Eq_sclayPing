@@ -1,24 +1,11 @@
-import csv
 import glob
 import pprint
-import shutil
 import zipfile
 from pathlib import Path
 
 from bs4 import BeautifulSoup
 
-from Split.funcs import create_csv
-
-
-def csv_open(csv_file_path):
-    """
-    csvファイルの読み込み
-    """
-    with csv_file_path.open(mode='r', encoding='utf-8') as file:
-        reader = csv.DictReader(file)
-        for row in reader:
-            key = row['銘柄コード']
-            sec_codes.append(key)
+from Split.funcs import create_csv, csv_open, del_folder
 
 
 def sec_code_fifth(sec_code):
@@ -28,15 +15,6 @@ def sec_code_fifth(sec_code):
     if len(str(int(sec_code))) == 4:
         sec_code = str(int(sec_code)) + '0'
         return sec_code
-
-
-def del_folder(bath_path):
-    """
-    解凍フォルダーが存在したら削除する
-    """
-    fold_path = Path.joinpath(bath_path, 'XBRL')
-    if fold_path.exists():
-        shutil.rmtree(fold_path)
 
 
 def sec_code_reserch(sec_codes, bath_path, find_word1, find_words, find_words2):
