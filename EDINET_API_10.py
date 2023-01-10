@@ -11,6 +11,32 @@ import pandas as pd
 import requests
 from dateutil.relativedelta import relativedelta
 
+def csv_open(csv_file_path):
+    """
+    csvファイルの読み込み
+    """
+    with csv_file_path.open(mode='r', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            key = row['銘柄コード']
+            codes.append(key)
+
+# datetime型でfor文を回す
+def date_range(start, stop, step=timedelta(1)):
+    current = start
+    while current < stop:
+        yield current
+        current += step
+
+def code_fifth(code):
+    """
+    codeが4桁の時に5桁にする関数
+    """
+    if len(str(int(code))) == 4:
+        code = str(int(code)) + '0'
+        return code
+
+
 # ZIPファイルのダウンロード専用(2023/01/05 書き直し用にRetryのブランチを作成)
 
 edinet_url = "https://disclosure.edinet-fsa.go.jp/api/v1/documents.json"
@@ -24,15 +50,8 @@ quarter = False
 # 差分リストから銘柄コ－ドを取り出す
 
 base_path = Path(__file__).parent
-# path_dif = base_path / 'screening' / 'csv_differ.csv'
-# 初回なので全銘柄(2022/10/10)
 path_dif = base_path / 'screening' / 'csv_differ.csv'
-with path_dif.open(mode='r', encoding='utf-8') as file:
-    reader = csv.DictReader(file)
-    for row in reader:
-        key = row['銘柄コード']
-        codes.append(key)
-
+csv_open(path_dif)
 print(codes)
 
 # codesを文字型の配列に統一する．
@@ -40,12 +59,7 @@ if codes is not None:
     if type(codes) in (str, int, float):
         codes = [int(codes)]
 
-# datetime型でfor文を回す
-def date_range(start, stop, step=timedelta(1)):
-    current = start
-    while current < stop:
-        yield current
-        current += step
+
 
 
 # 結果を格納するDataFrameを用意
@@ -82,7 +96,7 @@ for d in date_range(date.today() - relativedelta(years=year, months=month, days=
     for code in codes:
         # 4桁の証券コードを5桁に変換
         if len(str(int(code))) == 4:
-            code = str(int(code)) + '0'
+            code = code_fifth(code)
         # 指定された証券コードのみを抽出
         if code is not None:
             df0 = df[df['code'] == code]
