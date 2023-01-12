@@ -41,8 +41,8 @@ def code_fifth(code):
 
 edinet_url = "https://disclosure.edinet-fsa.go.jp/api/v1/documents.json"
 codes = []
-year = 1
-month = 0
+year = 0
+month = 7
 day = 0
 annual = True
 quarter = False
@@ -63,10 +63,11 @@ if codes is not None:
 
 
 # 結果を格納するDataFrameを用意
-database = pd.DataFrame(index=[], columns=['code', 'type', 'date', 'title', 'URL'])
-
+# database = pd.DataFrame(index=[], columns=['code', 'type', 'date', 'title', 'URL'])
+database = []
 for d in date_range(date.today() - relativedelta(years=year, months=month, days=day) + relativedelta(days=1),
-                    date.today() + relativedelta(days=1)):
+                    date.today() + relativedelta(months=-6)):
+                    # date.today() + relativedelta(days=1)):
     # EDINET API にアクセス
     d_str = d.strftime('%Y-%m-%d')
     params = {'date': d_str, 'type': 2}
@@ -84,7 +85,30 @@ for d in date_range(date.today() - relativedelta(years=year, months=month, days=
     # 0件の場合
     if len(json_res['results']) == 0:
         continue
-
+    for data in json_res['results']:
+        if data['secCode'] is None:
+            continue
+        for code in codes:
+            # 4桁の証券コードを5桁に変換
+            if len(str(int(code))) == 4:
+                code = code_fifth(code)
+                if data['secCode'] in code:
+                    # データベースに追加
+                    if annual:
+                        if data['ordinanceCode'] == '010' and data['formCode'] == '030000':
+                            database.append({'code': data['secCode'],
+                                                        'type': 'annual',
+                                                        'date': 'd',
+                                                        'title': data['docDescription'],
+                                                        'URL': "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + data['docID']})
+                    if quarter:
+                        if data['ordinanceCode'] == '010' and data['formCode'] == '043000':
+                            database.append({'code': data['secCode'],
+                                                        'type': 'quarter',
+                                                        'date': 'd',
+                                                        'title': data['docDescription'],
+                                                        'URL': "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + data['docID']})
+    """
     df = pd.DataFrame(json_res['results'])[['docID', 'secCode', 'ordinanceCode', 'formCode', 'docDescription']]
     df.dropna(subset=['docID'], inplace=True)
     df.dropna(subset=['secCode'], inplace=True)
@@ -92,6 +116,7 @@ for d in date_range(date.today() - relativedelta(years=year, months=month, days=
     df['date'] = d
     df['URL'] = df['docID']
     df['URL'] = "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + df['URL']
+
 
     for code in codes:
         # 4桁の証券コードを5桁に変換
@@ -112,10 +137,11 @@ for d in date_range(date.today() - relativedelta(years=year, months=month, days=
                     if database.empty:
                         database = pd.concat([database, df2[['code', 'type', 'date', 'title', 'URL']]], axis=0,
                                              join='outer').reset_index(drop=True)
+    """
 pprint.pprint(database)
 #csvでリンク先デ－タ排出
-path_edi_Url = base_path / 'CASAFLOWDATA' / 'csv_edinet_url.csv'
-database.to_csv(path_edi_Url, encoding='utf-8', index=True)
+# path_edi_Url = base_path / 'CASAFLOWDATA' / 'csv_edinet_url.csv'
+# database.to_csv(path_edi_Url, encoding='utf-8', index=True)
 #    return database
 codes2 = []
 keys = database['code']
