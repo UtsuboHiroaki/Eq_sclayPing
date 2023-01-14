@@ -1,15 +1,14 @@
 import csv
 import json
-import os
 import pprint
 import re
 import time
 from datetime import date, timedelta
 from pathlib import Path
 
-import pandas as pd
 import requests
 from dateutil.relativedelta import relativedelta
+
 
 def csv_open(csv_file_path):
     """
@@ -98,14 +97,14 @@ for d in date_range(date.today() - relativedelta(years=year, months=month, days=
                         if data['ordinanceCode'] == '010' and data['formCode'] == '030000':
                             database.append({'code': data['secCode'],
                                                         'type': 'annual',
-                                                        'date': 'd',
+                                                        'date': d,
                                                         'title': data['docDescription'],
                                                         'URL': "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + data['docID']})
                     if quarter:
                         if data['ordinanceCode'] == '010' and data['formCode'] == '043000':
                             database.append({'code': data['secCode'],
                                                         'type': 'quarter',
-                                                        'date': 'd',
+                                                        'date': d,
                                                         'title': data['docDescription'],
                                                         'URL': "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + data['docID']})
     """
@@ -143,63 +142,65 @@ pprint.pprint(database)
 # path_edi_Url = base_path / 'CASAFLOWDATA' / 'csv_edinet_url.csv'
 # database.to_csv(path_edi_Url, encoding='utf-8', index=True)
 #    return database
-codes2 = []
-keys = database['code']
-for key in keys:
-    key_code = key[:4]
-    if key_code in codes:
-        codes2.append(str(key_code))
+# codes2 = []
+# keys = database['code']
+# for key in keys:
+#     key_code = key[:4]
+#     if key_code in codes:
+#         codes2.append(str(key_code))
 
-codes = codes2
-if codes is None:
-    codes = [None]
-else:
-    if type(codes) in (str, int, float):
-        codes = [int(codes)]
-    for i, code in enumerate(codes):
-        if len(str(int(code))) == 4:
-            codes[i] = str(int(code)) + '0'
-        if code is None:
-            df_company = database
-        else:
-            df_company = database[database['code'] == codes[i]]
-            df_company = df_company.reset_index(drop=True)
+# codes = codes2
+# if codes is None:
+#     codes = [None]
+# else:
+#     if type(codes) in (str, int, float):
+#         codes = [int(codes)]
+    # for i, code in enumerate(codes):
+#     for code in codes:
+        # if code is None:
+        #     df_company = database
+        # else:
+          #  df_company = database[database['code'] == codes[i]]
+          #  df_company = df_company.reset_index(drop=True)
+for data in database:
+    # 証券コードをディレクトリ名とする
+    code = data['code']
+    if len(str(int(code))) == 4:
+        code = str(int(code)) + '0'
+    dir_path = Path.joinpath(base_path, code)
+    if dir_path.exists() is False:
+        dir_path.mkdir()
 
-            # 証券コードをディレクトリ名とする
-            dir_path = database.loc[i, 'code']
-            if os.path.exists(dir_path) is False:
-                os.mkdir(dir_path)
+    # for i in range(df_company.shape[0]):
+    if (data['type'] == 'annual') or (data['type'] == 'quarter'):
+        params = {"type": 1}
+        res = requests.get(data['URL'], params=params, stream=True)
+        if data['type'] == 'annual':
+            # 有価証券報告書のファイル名は"yyyy_0.zip"
+            filename = Path.joinpath(dir_path, str(data['date'].year) + '_0.zip')
+            # filename = dir_path + r'/' + str(data['date'].year) + r"_0.zip"
+        elif data['type'] == 'quarter':
+            if re.search('期第', data['title']) == None:
+                # 第何期か不明の四半期報告書のファイル名は"yyyy_unknown_docID.zip"
+                filename = dir_path + r'/' + str(data['date'].year) + r'_unknown_' + \
+                           data['URL'][-8:] + r'.zip'
+            else:
+                # 四半期報告書のファイル名は"yyyy_quarter.zip"
+                filename = dir_path + r'/' + str(data['date'].year) + r'_' + \
+                           data['title'][
+                               re.search('期第', data['title']).end()] + r'.zip'
+        # 同名のzipファイルが存在する場合，上書きはしない
+    if filename.exists() is True:
+        print(data['code'], data['date'], 'already exists')
+        continue
 
-            for i in range(df_company.shape[0]):
-                if (df_company.loc[i, 'type'] == 'annual') or (df_company.loc[i, 'type'] == 'quarter'):
-                    params = {"type": 1}
-                    res = requests.get(df_company.loc[i, 'URL'], params=params, stream=True)
-                    if df_company.loc[i, 'type'] == 'annual':
-                        # 有価証券報告書のファイル名は"yyyy_0.zip"
-                        filename = dir_path + r'/' + str(df_company.loc[i, 'date'].year) + r"_0.zip"
-                    elif df_company.loc[i, 'type'] == 'quarter':
-                        if re.search('期第', df_company.loc[i, 'title']) == None:
-                            # 第何期か不明の四半期報告書のファイル名は"yyyy_unknown_docID.zip"
-                            filename = dir_path + r'/' + str(df_company.loc[i, 'date'].year) + r'_unknown_' + \
-                                       df_company.loc[
-                                           i, 'URL'][
-                                       -8:] + r'.zip'
-                        else:
-                            # 四半期報告書のファイル名は"yyyy_quarter.zip"
-                            filename = dir_path + r'/' + str(df_company.loc[i, 'date'].year) + r'_' + \
-                                       df_company.loc[i, 'title'][
-                                           re.search('期第', df_company.loc[i, 'title']).end()] + r'.zip'
-                # 同名のzipファイルが存在する場合，上書きはしない
-                if os.path.exists(filename):
-                    print(df_company.loc[i, 'code'], df_company.loc[i, 'date'], 'already exists')
-                    continue
+    # 正常にアクセスできた場合のみzipファイルをダウンロード
+    if res.status_code == 200:
+        with open(filename, 'wb') as file:
+            for chunk in res.iter_content(chunk_size=1024):
+                file.write(chunk)
+            print(data['code'], data['date'], 'saved')
+            sec_code = data['code']
+            dow_data = data['title']
 
-                # 正常にアクセスできた場合のみzipファイルをダウンロード
-                if res.status_code == 200:
-                    with open(filename, 'wb') as file:
-                        for chunk in res.iter_content(chunk_size=1024):
-                            file.write(chunk)
-                        print(df_company.loc[i, 'code'], df_company.loc[i, 'date'], 'saved')
-                        sec_code = df_company.loc[i, 'code']
-                        dow_data = df_company.loc[i, 'title']
-    print('done!')
+print('done!')
