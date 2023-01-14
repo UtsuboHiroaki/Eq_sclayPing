@@ -58,11 +58,7 @@ if codes is not None:
     if type(codes) in (str, int, float):
         codes = [int(codes)]
 
-
-
-
-# 結果を格納するDataFrameを用意
-# database = pd.DataFrame(index=[], columns=['code', 'type', 'date', 'title', 'URL'])
+# 結果を格納するDatabaseを用意
 database = []
 for d in date_range(date.today() - relativedelta(years=year, months=month, days=day) + relativedelta(days=1),
                     date.today() + relativedelta(months=-6)):
@@ -107,61 +103,9 @@ for d in date_range(date.today() - relativedelta(years=year, months=month, days=
                                                         'date': d,
                                                         'title': data['docDescription'],
                                                         'URL': "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + data['docID']})
-    """
-    df = pd.DataFrame(json_res['results'])[['docID', 'secCode', 'ordinanceCode', 'formCode', 'docDescription']]
-    df.dropna(subset=['docID'], inplace=True)
-    df.dropna(subset=['secCode'], inplace=True)
-    df.rename(columns={'secCode': 'code', 'docDescription': 'title'}, inplace=True)
-    df['date'] = d
-    df['URL'] = df['docID']
-    df['URL'] = "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + df['URL']
 
-
-    for code in codes:
-        # 4桁の証券コードを5桁に変換
-        if len(str(int(code))) == 4:
-            code = code_fifth(code)
-        # 指定された証券コードのみを抽出
-        if code is not None:
-            df0 = df[df['code'] == code]
-            if not df0.empty:
-                if annual:
-                    df1 = df0[(df0['ordinanceCode'] == '010') & (df0['formCode'] == '030000')]
-                    df1['type'] = 'annual'
-                    database = pd.concat([database, df1[['code', 'type', 'date', 'title', 'URL']]], axis=0,
-                                             join='outer').reset_index(drop=True)
-                if quarter:
-                    df2 = df0[(df0['ordinanceCode'] == '010') & (df0['formCode'] == '043000')]
-                    df2['type'] = 'quarter'
-                    if database.empty:
-                        database = pd.concat([database, df2[['code', 'type', 'date', 'title', 'URL']]], axis=0,
-                                             join='outer').reset_index(drop=True)
-    """
 pprint.pprint(database)
-#csvでリンク先デ－タ排出
-# path_edi_Url = base_path / 'CASAFLOWDATA' / 'csv_edinet_url.csv'
-# database.to_csv(path_edi_Url, encoding='utf-8', index=True)
-#    return database
-# codes2 = []
-# keys = database['code']
-# for key in keys:
-#     key_code = key[:4]
-#     if key_code in codes:
-#         codes2.append(str(key_code))
 
-# codes = codes2
-# if codes is None:
-#     codes = [None]
-# else:
-#     if type(codes) in (str, int, float):
-#         codes = [int(codes)]
-    # for i, code in enumerate(codes):
-#     for code in codes:
-        # if code is None:
-        #     df_company = database
-        # else:
-          #  df_company = database[database['code'] == codes[i]]
-          #  df_company = df_company.reset_index(drop=True)
 for data in database:
     # 証券コードをディレクトリ名とする
     code = data['code']
@@ -171,7 +115,6 @@ for data in database:
     if dir_path.exists() is False:
         dir_path.mkdir()
 
-    # for i in range(df_company.shape[0]):
     if (data['type'] == 'annual') or (data['type'] == 'quarter'):
         params = {"type": 1}
         res = requests.get(data['URL'], params=params, stream=True)
@@ -182,14 +125,13 @@ for data in database:
         elif data['type'] == 'quarter':
             if re.search('期第', data['title']) == None:
                 # 第何期か不明の四半期報告書のファイル名は"yyyy_unknown_docID.zip"
-                filename = dir_path + r'/' + str(data['date'].year) + r'_unknown_' + \
-                           data['URL'][-8:] + r'.zip'
+                filename = Path.joinpath(dir_path, str(data['date'].year) + '_unknown_' + data['URL'] + '.zip')
             else:
                 # 四半期報告書のファイル名は"yyyy_quarter.zip"
-                filename = dir_path + r'/' + str(data['date'].year) + r'_' + \
-                           data['title'][
-                               re.search('期第', data['title']).end()] + r'.zip'
-        # 同名のzipファイルが存在する場合，上書きはしない
+                filename = Path.joinpath(dir_path, str(data['date'].year) + '_' + data['title'][
+                               re.search('期第', data['title']).end()] + '.zip')
+
+    # 同名のzipファイルが存在する場合，上書きはしない
     if filename.exists() is True:
         print(data['code'], data['date'], 'already exists')
         continue
