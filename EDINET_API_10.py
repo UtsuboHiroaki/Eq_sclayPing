@@ -35,6 +35,31 @@ def code_fifth(code):
         code = str(int(code)) + '0'
         return code
 
+def insert_database(codes, d, data, annual, quarter, database):
+    """
+    データベースにEdinetのURL情報を追加
+    """
+    for code in codes:
+        # 4桁の証券コードを5桁に変換
+        if len(str(int(code))) == 4:
+            code = code_fifth(code)
+            if data['secCode'] in code:
+                # データベースに追加
+                if annual:
+                    if data['ordinanceCode'] == '010' and data['formCode'] == '030000':
+                        database.append({'code': data['secCode'],
+                                         'type': 'annual',
+                                         'date': d,
+                                         'title': data['docDescription'],
+                                         'URL': "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + data['docID']})
+                if quarter:
+                    if data['ordinanceCode'] == '010' and data['formCode'] == '043000':
+                        database.append({'code': data['secCode'],
+                                         'type': 'quarter',
+                                         'date': d,
+                                         'title': data['docDescription'],
+                                         'URL': "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + data['docID']})
+    return database
 
 # ZIPファイルのダウンロード専用(2023/01/05 書き直し用にRetryのブランチを作成)
 
@@ -45,6 +70,7 @@ month = 7
 day = 0
 annual = True
 quarter = False
+database = []
 
 # 差分リストから銘柄コ－ドを取り出す
 
@@ -58,8 +84,7 @@ if codes is not None:
     if type(codes) in (str, int, float):
         codes = [int(codes)]
 
-# 結果を格納するDatabaseを用意
-database = []
+# 期間を指定する
 for d in date_range(date.today() - relativedelta(years=year, months=month, days=day) + relativedelta(days=1),
                     date.today() + relativedelta(months=-6)):
                     # date.today() + relativedelta(days=1)):
@@ -75,7 +100,8 @@ for d in date_range(date.today() - relativedelta(years=year, months=month, days=
         print(d_str, 'not accessible')
         continue
 
-    print(d_str, json_res['metadata']['resultset']['count'])  # 日付と件数を表示
+    # 日付と件数を表示
+    print(d_str, json_res['metadata']['resultset']['count'])
 
     # 0件の場合
     if len(json_res['results']) == 0:
@@ -83,26 +109,7 @@ for d in date_range(date.today() - relativedelta(years=year, months=month, days=
     for data in json_res['results']:
         if data['secCode'] is None:
             continue
-        for code in codes:
-            # 4桁の証券コードを5桁に変換
-            if len(str(int(code))) == 4:
-                code = code_fifth(code)
-                if data['secCode'] in code:
-                    # データベースに追加
-                    if annual:
-                        if data['ordinanceCode'] == '010' and data['formCode'] == '030000':
-                            database.append({'code': data['secCode'],
-                                                        'type': 'annual',
-                                                        'date': d,
-                                                        'title': data['docDescription'],
-                                                        'URL': "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + data['docID']})
-                    if quarter:
-                        if data['ordinanceCode'] == '010' and data['formCode'] == '043000':
-                            database.append({'code': data['secCode'],
-                                                        'type': 'quarter',
-                                                        'date': d,
-                                                        'title': data['docDescription'],
-                                                        'URL': "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + data['docID']})
+        insert_database(codes, d, data, annual, quarter, database)
 
 pprint.pprint(database)
 
