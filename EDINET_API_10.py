@@ -137,33 +137,36 @@ def download_zipfile(database, base_path):
 
 
 # ZIPファイルのダウンロード専用(2023/01/05 書き直し用にRetryのブランチを作成)
+# 2023/01/14 リライト完了(関数化)
 
-edinet_url = "https://disclosure.edinet-fsa.go.jp/api/v1/documents.json"
-codes = []
-year = 0
-month = 7
-day = 0
-annual = True
-quarter = False
-database = []
+if __name__ == "__main__":
 
-# 差分リストから銘柄コ－ドを取り出す
+    edinet_url = "https://disclosure.edinet-fsa.go.jp/api/v1/documents.json"
+    codes = []
+    year = 0
+    month = 7
+    day = 0
+    annual = True
+    quarter = False
+    database = []
 
-base_path = Path(__file__).parent
-path_dif = base_path / 'screening' / 'csv_differ.csv'
-csv_open(path_dif)
-print(codes)
+    # 差分リストから銘柄コ－ドを取り出す
 
-# codesを文字型の配列に統一する．
-if codes is not None:
-    if type(codes) in (str, int, float):
-        codes = [int(codes)]
+    base_path = Path(__file__).parent
+    path_dif = base_path / 'screening' / 'csv_differ.csv'
+    csv_open(path_dif)
+    print(codes)
 
-# EDINETにアクセスしdatabaseにデータを追加
-reserch_edinet(codes, annual, quarter, database)
-# databaseをプリント
-pprint.pprint(database)
-# ZIPファイルのダウンロード
-download_zipfile(database, base_path)
+    # codesを文字型の配列に統一する．
+    if codes is not None:
+        if type(codes) in (str, int, float):
+            codes = [int(codes)]
 
-print('done!')
+    # EDINETにアクセスしdatabaseにデータを追加
+    reserch_edinet(codes, annual, quarter, database)
+    # databaseをプリント
+    pprint.pprint(database)
+    # ZIPファイルのダウンロード
+    download_zipfile(database, base_path)
+
+    print('done!')
