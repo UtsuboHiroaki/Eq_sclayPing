@@ -61,6 +61,81 @@ def insert_database(codes, d, data, annual, quarter, database):
                                          'URL': "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + data['docID']})
     return database
 
+def reserch_edinet(codes, annual, quarter, database):
+    """
+    期間をしていしてEdinetのAPIにアクセスする
+    """
+    # 期間を指定する
+    for d in date_range(date.today() - relativedelta(years=year, months=month, days=day) + relativedelta(days=1),
+                        date.today() + relativedelta(months=-6)):
+        # date.today() + relativedelta(days=1)):
+        # EDINET API にアクセス
+        d_str = d.strftime('%Y-%m-%d')
+        params = {'date': d_str, 'type': 2}
+        res = requests.get(edinet_url, params=params, verify=False)
+        json_res = json.loads(res.text)
+        time.sleep(5)
+
+        # 正常にアクセスできない場合
+        if json_res['metadata']['status'] != '200':
+            print(d_str, 'not accessible')
+            continue
+
+        # 日付と件数を表示
+        print(d_str, json_res['metadata']['resultset']['count'])
+
+        # 0件の場合
+        if len(json_res['results']) == 0:
+            continue
+        for data in json_res['results']:
+            if data['secCode'] is None:
+                continue
+            insert_database(codes, d, data, annual, quarter, database)
+
+def download_zipfile(database, base_path):
+    """
+    URLからzipファイルをダウンロード
+    """
+    for data in database:
+        # 証券コードをディレクトリ名とする
+        code = data['code']
+        if len(str(int(code))) == 4:
+            code = str(int(code)) + '0'
+        dir_path = Path.joinpath(base_path, code)
+        # ディレクトリがない場合は作成
+        if dir_path.exists() is False:
+            dir_path.mkdir()
+
+        if (data['type'] == 'annual') or (data['type'] == 'quarter'):
+            params = {"type": 1}
+            res = requests.get(data['URL'], params=params, stream=True)
+            if data['type'] == 'annual':
+                # 有価証券報告書のファイル名は"yyyy_0.zip"
+                filename = Path.joinpath(dir_path, str(data['date'].year) + '_0.zip')
+            elif data['type'] == 'quarter':
+                if re.search('期第', data['title']) == None:
+                    # 第何期か不明の四半期報告書のファイル名は"yyyy_unknown_docID.zip"
+                    filename = Path.joinpath(dir_path, str(data['date'].year) + '_unknown_' + data['URL'] + '.zip')
+                else:
+                    # 四半期報告書のファイル名は"yyyy_quarter.zip"
+                    filename = Path.joinpath(dir_path, str(data['date'].year) + '_' + data['title'][
+                                   re.search('期第', data['title']).end()] + '.zip')
+
+        # 同名のzipファイルが存在する場合，上書きはしない
+        if filename.exists() is True:
+            print(data['code'], data['date'], 'already exists')
+            continue
+
+        # 正常にアクセスできた場合のみzipファイルをダウンロード
+        if res.status_code == 200:
+            with open(filename, 'wb') as file:
+                for chunk in res.iter_content(chunk_size=1024):
+                    file.write(chunk)
+                print(data['code'], data['date'], 'saved')
+                sec_code = data['code']
+                dow_data = data['title']
+
+
 # ZIPファイルのダウンロード専用(2023/01/05 書き直し用にRetryのブランチを作成)
 
 edinet_url = "https://disclosure.edinet-fsa.go.jp/api/v1/documents.json"
@@ -84,72 +159,11 @@ if codes is not None:
     if type(codes) in (str, int, float):
         codes = [int(codes)]
 
-# 期間を指定する
-for d in date_range(date.today() - relativedelta(years=year, months=month, days=day) + relativedelta(days=1),
-                    date.today() + relativedelta(months=-6)):
-                    # date.today() + relativedelta(days=1)):
-    # EDINET API にアクセス
-    d_str = d.strftime('%Y-%m-%d')
-    params = {'date': d_str, 'type': 2}
-    res = requests.get(edinet_url, params=params, verify=False)
-    json_res = json.loads(res.text)
-    time.sleep(5)
-
-    # 正常にアクセスできない場合
-    if json_res['metadata']['status'] != '200':
-        print(d_str, 'not accessible')
-        continue
-
-    # 日付と件数を表示
-    print(d_str, json_res['metadata']['resultset']['count'])
-
-    # 0件の場合
-    if len(json_res['results']) == 0:
-        continue
-    for data in json_res['results']:
-        if data['secCode'] is None:
-            continue
-        insert_database(codes, d, data, annual, quarter, database)
-
+# EDINETにアクセスしdatabaseにデータを追加
+reserch_edinet(codes, annual, quarter, database)
+# databaseをプリント
 pprint.pprint(database)
-
-for data in database:
-    # 証券コードをディレクトリ名とする
-    code = data['code']
-    if len(str(int(code))) == 4:
-        code = str(int(code)) + '0'
-    dir_path = Path.joinpath(base_path, code)
-    if dir_path.exists() is False:
-        dir_path.mkdir()
-
-    if (data['type'] == 'annual') or (data['type'] == 'quarter'):
-        params = {"type": 1}
-        res = requests.get(data['URL'], params=params, stream=True)
-        if data['type'] == 'annual':
-            # 有価証券報告書のファイル名は"yyyy_0.zip"
-            filename = Path.joinpath(dir_path, str(data['date'].year) + '_0.zip')
-            # filename = dir_path + r'/' + str(data['date'].year) + r"_0.zip"
-        elif data['type'] == 'quarter':
-            if re.search('期第', data['title']) == None:
-                # 第何期か不明の四半期報告書のファイル名は"yyyy_unknown_docID.zip"
-                filename = Path.joinpath(dir_path, str(data['date'].year) + '_unknown_' + data['URL'] + '.zip')
-            else:
-                # 四半期報告書のファイル名は"yyyy_quarter.zip"
-                filename = Path.joinpath(dir_path, str(data['date'].year) + '_' + data['title'][
-                               re.search('期第', data['title']).end()] + '.zip')
-
-    # 同名のzipファイルが存在する場合，上書きはしない
-    if filename.exists() is True:
-        print(data['code'], data['date'], 'already exists')
-        continue
-
-    # 正常にアクセスできた場合のみzipファイルをダウンロード
-    if res.status_code == 200:
-        with open(filename, 'wb') as file:
-            for chunk in res.iter_content(chunk_size=1024):
-                file.write(chunk)
-            print(data['code'], data['date'], 'saved')
-            sec_code = data['code']
-            dow_data = data['title']
+# ZIPファイルのダウンロード
+download_zipfile(database, base_path)
 
 print('done!')
