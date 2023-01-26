@@ -20,12 +20,14 @@ def csv_open(csv_file_path):
             key = row['銘柄コード']
             codes.append(key)
 
+
 # datetime型でfor文を回す
 def date_range(start, stop, step=timedelta(1)):
     current = start
     while current < stop:
         yield current
         current += step
+
 
 def code_fifth(code):
     """
@@ -34,6 +36,7 @@ def code_fifth(code):
     if len(str(int(code))) == 4:
         code = str(int(code)) + '0'
         return code
+
 
 def insert_database(codes, d, data, annual, quarter, database):
     """
@@ -51,15 +54,18 @@ def insert_database(codes, d, data, annual, quarter, database):
                                          'type': 'annual',
                                          'date': d,
                                          'title': data['docDescription'],
-                                         'URL': "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + data['docID']})
+                                         'URL': "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + data[
+                                             'docID']})
                 if quarter:
                     if data['ordinanceCode'] == '010' and data['formCode'] == '043000':
                         database.append({'code': data['secCode'],
                                          'type': 'quarter',
                                          'date': d,
                                          'title': data['docDescription'],
-                                         'URL': "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + data['docID']})
+                                         'URL': "https://disclosure.edinet-fsa.go.jp/api/v1/documents/" + data[
+                                             'docID']})
     return database
+
 
 def reserch_edinet(codes, annual, quarter, database):
     """
@@ -92,6 +98,7 @@ def reserch_edinet(codes, annual, quarter, database):
                 continue
             insert_database(codes, d, data, annual, quarter, database)
 
+
 def download_zipfile(database, base_path):
     """
     URLからzipファイルをダウンロード
@@ -119,7 +126,7 @@ def download_zipfile(database, base_path):
                 else:
                     # 四半期報告書のファイル名は"yyyy_quarter.zip"
                     filename = Path.joinpath(dir_path, str(data['date'].year) + '_' + data['title'][
-                                   re.search('期第', data['title']).end()] + '.zip')
+                        re.search('期第', data['title']).end()] + '.zip')
 
         # 同名のzipファイルが存在する場合，上書きはしない
         if filename.exists() is True:

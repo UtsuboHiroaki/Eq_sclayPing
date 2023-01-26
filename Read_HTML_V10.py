@@ -61,6 +61,7 @@ def sec_code_reserch(sec_codes, bath_path, find_word1, find_words, find_words2):
         rearch_data(files, find_word1, sec_code, dow_data, *find_words)
         del_folder
 
+
 def rearch_data(files, find_word1, sec_code, dow_data, *find_words):
     """
     作業回数を1回にしたいのでカウンタ－設定。counterが1以上ならル－プ抜ける
@@ -95,7 +96,8 @@ def rearch_data(files, find_word1, sec_code, dow_data, *find_words):
 
     return cash_flow_list
 
-def data_get(tani_moto,data_moto, find_words, find_words2, sec_code, dow_data):
+
+def data_get(tani_moto, data_moto, find_words, find_words2, sec_code, dow_data):
     """
     データを取得する関数
     """
@@ -155,6 +157,7 @@ def data_get(tani_moto,data_moto, find_words, find_words2, sec_code, dow_data):
                             break
     return counter
 
+
 def create_csv(title, cash_flow_list):
     """
     csvファイルの生成
@@ -171,6 +174,7 @@ def create_csv(title, cash_flow_list):
         writer = csv.DictWriter(f, fieldnames=field_names, extrasaction='ignore')
         writer.writeheader()
         writer.writerows(cash_flow_list)
+
 
 if __name__ == "__main__":
     find_word1 = '連結キャッシュ・フロー計算書'
